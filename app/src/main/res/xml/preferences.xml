@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:title="Pressure filtering"
+        android:summary="The time taken for the filter to settle"
+        android:defaultValue="3"
+        android:entryValues="@array/filterValues"
+        android:entries="@array/filterEntries"
+        android:key="sample_filter_strength" />
+
+    <ListPreference
+        android:title="Sampling rate"
+        android:summary="Faster is more accurate but uses more power"
+        android:defaultValue="0"
+        android:entryValues="@array/sampleRateValues"
+        android:entries="@array/sampleRateEntries"
+        android:key="sample_rate" />
+
+    <CheckBoxPreference
+        android:key="show_vsi"
+        android:title="Show VSI"
+        android:defaultValue="true"
+        android:summaryOff="Altimeter will be larger and VSI will not be shown"
+        android:summaryOn="Vertical speed indicator will be shown"/>
+
+    <CheckBoxPreference
+        android:key="show_status"
+        android:title="Show Status Info"
+        android:defaultValue="false"
+        android:summaryOff="Navigation warning will be shown"
+        android:summaryOn="Status information will replace navigation warning"/>
+
+    <CheckBoxPreference
+        android:title="Use metric units for pressure setting"
+        android:key="Metric"
+        android:summaryOff="Inches of mercury (inHg) are in use"
+        android:summaryOn="Hectopascals (hPa, equivalent to millibars) are in use"
+        android:defaultValue="true"/>
+
+    <CheckBoxPreference
+        android:title="Display in feet"
+        android:key="display_feet"
+        android:summaryOn="Altimeter and VSI display in feet"
+        android:summaryOff="Altimeter and VSI display in metres"
+        android:defaultValue="true"/>
+
+    <CheckBoxPreference
+        android:title="Display altitude history"
+        android:key="display_alt_history"
+        android:summaryOn="30s of altitude history are displayed on a rolling graph"
+        android:summaryOff="The altitude history graph is not displayed"
+        android:defaultValue="true"/>
+
+    <CheckBoxPreference
+        android:title="Display vertical speed history"
+        android:key="display_vsi_history"
+        android:summaryOn="30s of vertical speed history are displayed on a rolling graph"
+        android:summaryOff="The vertical history graph is not displayed"
+        android:defaultValue="true"/>
+</PreferenceScreen>

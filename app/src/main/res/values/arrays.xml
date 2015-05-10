@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string-array name="filterEntries">
+        <item name="0">No filtering</item>
+        <item name="1">Very weak filtering (settles in 0.5s)</item>
+        <item name="2">Weak filtering (settles in 1s)</item>
+        <item name="3">Medium filtering (settles in 2.5s)</item>
+        <item name="4">Strong filtering (settles in 5s)</item>
+        <item name="5">Very strong filtering (settles in 10s)</item>
+    </string-array>
+
+    <string-array name="filterValues">
+        <item name="0">0</item>
+        <item name="1">1</item>
+        <item name="2">2</item>
+        <item name="3">3</item>
+        <item name="4">4</item>
+        <item name="5">5</item>
+    </string-array>
+
+    <string-array name="sampleRateEntries">
+        <item name="0">Fastest (SENSOR_DELAY_FASTEST)</item>
+        <item name="1">Fast (SENSOR_DELAY_GAME)</item>
+        <item name="2">Slow (SENSOR_DELAY_UI)</item>
+        <item name="3">Slowest (SENSOR_DELAY_NORMAL)</item>
+    </string-array>
+
+    <string-array name="sampleRateValues">
+        <item name="0">0</item>
+        <item name="1">1</item>
+        <item name="2">2</item>
+        <item name="3">3</item>
+    </string-array>
+</resources>
