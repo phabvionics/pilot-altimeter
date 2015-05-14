@@ -8,8 +8,8 @@ android {
         applicationId "uk.co.phabvionics.pilotaltimeter"
         minSdkVersion 10
         targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        versionCode 14
+        versionName "1.8"
     }
     buildTypes {
         release {
