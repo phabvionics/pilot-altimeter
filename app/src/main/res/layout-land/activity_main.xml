@@ -12,7 +12,7 @@
     android:keepScreenOn="true"
     tools:context=".MainActivity" >
 
-    <uk.co.phabvionics.pilotaltimeter.Altimeter
+    <uk.co.phabvionics.pilotaltimeter.AltimeterView
         android:id="@+id/altimeter1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -122,7 +122,7 @@
 
     </TableLayout>
 
-    <uk.co.phabvionics.pilotaltimeter.VerticalSpeedIndicator
+    <uk.co.phabvionics.pilotaltimeter.VSIView
         android:id="@+id/verticalSpeedIndicator1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

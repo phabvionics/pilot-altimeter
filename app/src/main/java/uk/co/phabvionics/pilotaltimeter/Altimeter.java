@@ -1,11 +1,10 @@
 package uk.co.phabvionics.pilotaltimeter;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.View;
+
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -15,7 +14,14 @@ import android.view.View;
  * @author david
  *
  */
-public class Altimeter extends View {
+public class Altimeter
+{
+    private static final Altimeter INSTANCE = new Altimeter();
+    public static Altimeter getInstance()
+    {
+        return INSTANCE;
+    }
+
     private float mPressureDatum; // Pressure datum is defined in hectoPascals (equivalent to millibars).
     private float mPressureMeasurement; // Pressure measurement is defined in hectoPascals (equivalent to millibars).
     private boolean mPressureMeasurementValid; // Set to true when pressure measurement has been set.
@@ -66,70 +72,63 @@ public class Altimeter extends View {
     private long mHistoryEndTime;
     private static final long HISTORY_TIME_STEP = 500000000; // 500ms
 
+    public boolean isPressureMeasurementValid() {
+        return mPressureMeasurementValid;
+    }
+
+    public float getFilteredPressure() {
+        return mFilteredPressure;
+    }
+
+    public boolean isMetricPressure() {
+        return mMetricMode;
+    }
+
+    public String getDatumText() {
+        return mDatumText;
+    }
+
+    public float[] getHistory() {
+        return mHistory;
+    }
+
+    public int getHistorySize() {
+        return mHistorySize;
+    }
+
+    private boolean mStopped = true;
+
+    public boolean isStopped() {
+        return mStopped;
+    }
+
+    public boolean isDisplayGraph() {
+        return mDisplayGraph;
+    }
+
     public enum FilterStrength {
         FILTER_OFF,
         FILTER_WEAK,
         FILTER_MEDIUM,
         FILTER_STRONG,
         FILTER_VERY_STRONG
-    };
+    }
 
-    public Altimeter(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
+    private Altimeter() {
         mPressureMeasurementValid = false;
-        mWhitePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mWhitePaint.setColor(Color.WHITE);
-        mTickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mTickPaint.setColor(Color.WHITE);
-        mTickPaint.setStrokeWidth(5.0f);
-        mTickPaint.setStyle(Paint.Style.STROKE);
-        mAltitudePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mAltitudePaint.setColor(Color.WHITE);
-        mAltitudePaint.setTextAlign(Paint.Align.CENTER);
-        mDatumPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mDatumPaint.setColor(Color.WHITE);
-        mDatumPaint.setTextAlign(Paint.Align.CENTER);
-        mBlackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBlackPaint.setColor(Color.BLACK);
-        mGraphPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mGraphPaint.setColor(Color.BLACK);
-        mGraphPaint.setStrokeWidth(5.0f);
-        mGreyLeftPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mGreyLeftPaint.setColor(Color.GRAY);
-        mGreyMidPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mGreyMidPaint.setColor(Color.GRAY);
-        mGreyMidPaint.setTextAlign(Paint.Align.CENTER);
-        mGreyRightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mGreyRightPaint.setColor(Color.GRAY);
-        mGreyRightPaint.setTextAlign(Paint.Align.RIGHT);
-        mTimePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mTimePaint.setColor(Color.WHITE);
-        mTimePaint.setTextAlign(Paint.Align.CENTER);
-        mTickCoords = new float[40];
-        mDotCoords = new float[80];
-        mNumberCoords = new float[20];
         mMetricMode = true;
         mPressureDatum = 1013.25f;
         SetFilterStrength(FilterStrength.FILTER_MEDIUM);
-        mDatumText = "Press Alt";
         mHistorySize = 61;
         mHistory = new float[mHistorySize];
     }
 
     public void SetDisplayInFeet(boolean displayOption) {
-        if (mDisplayInFeet != displayOption) {
-            mDisplayInFeet = displayOption;
-            invalidate();
-        }
+        mDisplayInFeet = displayOption;
     }
 
     public void SetDisplayGraph(boolean displayOption) {
-        if (mDisplayGraph != displayOption) {
-            mDisplayGraph = displayOption;
-            setCoordinates();
-            invalidate();
-        }
+        mDisplayGraph = displayOption;
     }
 
     public void SetDatumText(String datumText) {
@@ -180,7 +179,6 @@ public class Altimeter extends View {
      */
     public void setPressureDatum(float pressure) {
         mPressureDatum = pressure;
-        invalidate();
     }
 
     public float getPressureDatum() {
@@ -193,7 +191,6 @@ public class Altimeter extends View {
         } else {
             mPressureDatum = inHg_to_hPa((float) (Math.floor(hPa_to_inHg(mPressureDatum) * 100.0 + 1.01) / 100.0));
         }
-        invalidate();
         return mPressureDatum;
     }
 
@@ -203,7 +200,6 @@ public class Altimeter extends View {
         } else {
             mPressureDatum = inHg_to_hPa((float) (Math.floor(hPa_to_inHg(mPressureDatum) * 100.0 + 10.01) / 100.0));
         }
-        invalidate();
         return mPressureDatum;
     }
 
@@ -213,7 +209,6 @@ public class Altimeter extends View {
         } else {
             mPressureDatum = inHg_to_hPa((float) (Math.floor(hPa_to_inHg(mPressureDatum) * 100.0 - 0.01) / 100.0));
         }
-        invalidate();
         return mPressureDatum;
     }
 
@@ -223,13 +218,11 @@ public class Altimeter extends View {
         } else {
             mPressureDatum = inHg_to_hPa((float) (Math.floor(hPa_to_inHg(mPressureDatum) * 100.0 - 9.01) / 100.0));
         }
-        invalidate();
         return mPressureDatum;
     }
 
     public float setPressureAlt() {
         mPressureDatum = 1013.25f;
-        invalidate();
         return mPressureDatum;
     }
 
@@ -242,13 +235,16 @@ public class Altimeter extends View {
             mTimestamp += TIME_STEP;
             if (mTimestamp >= mHistoryEndTime + HISTORY_TIME_STEP) {
                 mHistoryEndTime = mTimestamp;
-                for (int index = 0; index < mHistorySize - 1; index++) {
-                    mHistory[index] = mHistory[index + 1];
-                }
+                System.arraycopy(mHistory, 1, mHistory, 0, mHistorySize - 1);
                 mHistory[mHistorySize - 1] = pressureToHeight(mPressureDatum, mFilteredPressure);
             }
         }
     }
+
+    /**
+     * The time before it is considered that the altimeter is no longer receiving data in ms.
+     */
+    private static final long STOPPED_RECEIVING_DATA_TIME = 1000;
 
     /**
      * Provide this object with the latest raw pressure measurement.
@@ -264,203 +260,34 @@ public class Altimeter extends View {
         mPressureMeasurement = pressure;
         mSampleTimestamp = timestamp;
         filterPressure(timestamp);
+        mStopped = false;
+        if (mIndicateStoppedThread != null) mIndicateStoppedThread.cancel(true);
+        mIndicateStoppedThread = mExecutor.schedule(mIndicateStopped, STOPPED_RECEIVING_DATA_TIME, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * The Runnable that indicates that data is no longer being received.
+     */
+    private final ScheduledThreadPoolExecutor mExecutor = new ScheduledThreadPoolExecutor(1);
+    private final IndicateStopped mIndicateStopped = new IndicateStopped();
+    private ScheduledFuture<?> mIndicateStoppedThread;
+    class IndicateStopped implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            mStopped = true;
+        }
     }
 
     public void setMetric(boolean metric) {
         mMetricMode = metric;
-        invalidate();
-    }
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        mWidth = w;
-        mHeight = h;
-        setCoordinates();
-    }
-
-    private void setCoordinates() {
-        final float cx, cy, size;
-        final float minGraphPixels = Math.max(mWidth, mHeight) / 4.0f;
-        final float graphGuardPixels = 5.0f;
-        // If mDisplayGraph is set,
-        if (mDisplayGraph) {
-            // If component wider than high or square,
-            if (mWidth >= mHeight) {
-                // altimeter to display to the right and graph to the left.
-                size = Math.min(mWidth - minGraphPixels, mHeight);
-                cx = mWidth - size / 2.0f;
-                cy = size / 2.0f;
-                mGraphTop = graphGuardPixels;
-                mGraphBottom = mHeight - graphGuardPixels;
-                mGraphLeft = graphGuardPixels;
-                mGraphRight = mWidth - size - graphGuardPixels;
-                // If component higher than width,
-            } else {
-                // altimeter to display to the top and graph to the bottom.
-                size = Math.min(mWidth, mHeight - minGraphPixels);
-                cx = mWidth / 2.0f;
-                cy = size / 2.0f;
-                mGraphTop = size + graphGuardPixels;
-                mGraphBottom = mHeight - graphGuardPixels;
-                mGraphLeft = graphGuardPixels;
-                mGraphRight = mWidth - graphGuardPixels;
-            }
-            // If mDisplayGraph is cleared, altimeter should be centralised.
-        } else {
-            size = Math.min(mWidth, mHeight);
-            cx = mWidth / 2.0f;
-            cy = mHeight / 2.0f;
-        }
-
-        mSize = size;
-
-        mxAltPos = cx;
-        myAltPos = cy - 0.15f * size;
-
-        mxFLPos = cx;
-        myFLPos = cy + 0.17f * size;
-
-        mxDatumPos = cx;
-        myDatumPos = cy + 0.24f * size;
-
-        mxDatumTextPos = cx;
-        myDatumTextPos = cy + 0.31f * size;
-
-        mxTimePos = cx;
-        myTimePos = cy - 0.075f * size;
-
-        float tickStart = size * 0.43f;
-        float tickEnd = size * 0.47f;
-        float numberCentre = size * 0.38f;
-        for (int index = 0; index < 10; index++) {
-            double angle = 2.0 * Math.PI * index / 10.0;
-
-            mTickCoords[index * 4 + 0] = (float) (cx + tickStart * Math.sin(angle));
-            mTickCoords[index * 4 + 1] = (float) (cy - tickStart * Math.cos(angle));
-            mTickCoords[index * 4 + 2] = (float) (cx + tickEnd * Math.sin(angle));
-            mTickCoords[index * 4 + 3] = (float) (cy - tickEnd * Math.cos(angle));
-            mNumberCoords[index * 2 + 0] = (float) (cx + numberCentre * Math.sin(angle));
-            mNumberCoords[index * 2 + 1] = (float) (cy - numberCentre * Math.cos(angle)) - mTickPaint.ascent();
-            for (int subindex = 1; subindex < 5; subindex++) {
-                int arrayIndex = 8 * index + (subindex - 1) * 2;
-                angle = 2.0 * Math.PI * (index / 10.0 + subindex / 50.0);
-                mDotCoords[arrayIndex++] = (float) (cx + tickEnd * Math.sin(angle));
-                mDotCoords[arrayIndex++] = (float) (cy - tickEnd * Math.cos(angle));
-            }
-        }
-
-        mAltitudePaint.setTextSize(0.15f * size);
-        mDatumPaint.setTextSize(0.075f * size);
-        mTimePaint.setTextSize(0.075f * size);
-        mGreyLeftPaint.setTextSize(0.075f * size);
-        mGreyMidPaint.setTextSize(0.075f * size);
-        mGreyRightPaint.setTextSize(0.075f * size);
-        mxCentre = cx;
-        myCentre = cy;
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        // Draw a circle.
-        canvas.drawCircle(mxCentre, myCentre, mSize * 0.49f, mWhitePaint);
-        canvas.drawCircle(mxCentre, myCentre, mSize * 0.48f, mBlackPaint);
-
-        // Draw the tick lines and points.
-        canvas.drawLines(mTickCoords, mTickPaint);
-        canvas.drawPoints(mDotCoords, mTickPaint);
-
-        // Draw the numbers from 0 to 9.
-        for (int number = 0; number <= 9; number++) {
-            canvas.drawText(Integer.toString(number), mNumberCoords[number * 2], mNumberCoords[number * 2 + 1], mDatumPaint);
-        }
-
-        float height = 0.0f;
-        if (mPressureMeasurementValid) {
-            height = pressureToHeight(mPressureDatum, mFilteredPressure);
-
-            canvas.drawText(String.format("%.0f", height), mxAltPos, myAltPos, mAltitudePaint);
-            if (mPressureDatum == 1013.25 && mDisplayInFeet) {
-                canvas.drawText(String.format("FL%.0f", height / 100.0f), mxFLPos, myFLPos, mDatumPaint);
-            }
-            float angle = (float) ((height % 1000.0) / 1000.0 * Math.PI * 2.0);
-            float x = (float) (mxCentre + mSize * (Math.sin(angle) * 0.45));
-            float y = (float) (myCentre - mSize * (Math.cos(angle) * 0.45));
-            canvas.drawLine(mxCentre, myCentre, x, y, mTickPaint);
-            if (System.currentTimeMillis() - mSampleTimestamp / 1000000 >= 1000) {
-                canvas.drawText("STOPPED", mxTimePos, myTimePos, mTimePaint);
-            } else if (mDisplayInFeet) {
-                canvas.drawText("FT", mxTimePos, myTimePos, mTimePaint);
-            } else {
-                canvas.drawText("METRES", mxTimePos, myTimePos, mTimePaint);
-            }
-        } else {
-            canvas.drawText("No Data", mxAltPos, myAltPos, mAltitudePaint);
-        }
-
-        if (mPressureDatum == 1013.25) {
-            canvas.drawText(mMetricMode ? "1013.25hPa" : "29.92126\"Hg", mxDatumPos, myDatumPos, mDatumPaint);
-        } else if (mMetricMode) {
-            canvas.drawText(String.format("%.0fhPa", mPressureDatum), mxDatumPos, myDatumPos, mDatumPaint);
-        } else {
-            canvas.drawText(String.format("%.2f\"Hg", hPa_to_inHg(mPressureDatum)), mxDatumPos, myDatumPos, mDatumPaint);
-        }
-
-        canvas.drawText(mDatumText, mxDatumTextPos, myDatumTextPos, mDatumPaint);
-
-        // If the graph is to be displayed,
-        if (mDisplayGraph) {
-            // Determine the units in use.
-            String units = mDisplayInFeet ? "ft" : "m";
-            // Determine the scale.
-            float scale = mDisplayInFeet ? 100 : 50;
-
-            // Draw a box round the graph.
-            canvas.drawLine(mGraphLeft, mGraphTop, mGraphRight, mGraphTop, mBlackPaint);
-            canvas.drawLine(mGraphLeft, mGraphBottom, mGraphRight, mGraphBottom, mBlackPaint);
-            canvas.drawLine(mGraphLeft, mGraphTop, mGraphLeft, mGraphBottom, mBlackPaint);
-            canvas.drawLine(mGraphRight, mGraphTop, mGraphRight, mGraphBottom, mBlackPaint);
-            // Find nearest display units.
-            float mNearestHeight = Math.round(height / scale) * scale;
-            float mTopHeight = mNearestHeight + scale * 2;
-            // Draw x-axis parallels.
-            float graphHeight = mGraphBottom - mGraphTop;
-            canvas.drawLine(mGraphLeft, mGraphTop + graphHeight / 4.0f, mGraphRight, mGraphTop + graphHeight / 4.0f, mGreyLeftPaint);
-            canvas.drawLine(mGraphLeft, mGraphTop + graphHeight / 2.0f, mGraphRight, mGraphTop + graphHeight / 2.0f, mGreyLeftPaint);
-            canvas.drawLine(mGraphLeft, mGraphBottom - graphHeight / 4.0f, mGraphRight, mGraphBottom - graphHeight / 4.0f, mGreyLeftPaint);
-            // Draw labels.
-            canvas.drawText("" + (int)(mTopHeight - scale) + units, mGraphLeft, mGraphTop + graphHeight / 4.0f, mGreyLeftPaint);
-            canvas.drawText("" + (int)(mTopHeight - 2 * scale) + units, mGraphLeft, mGraphTop + graphHeight / 2.0f, mGreyLeftPaint);
-            canvas.drawText("" + (int)(mTopHeight - 3 * scale) + units, mGraphLeft, mGraphBottom - graphHeight / 4.0f, mGreyLeftPaint);
-            // Draw y-axis parallels.
-            float graphWidth = mGraphRight - mGraphLeft;
-            for (int interval = 1; interval < 6; interval++) {
-                canvas.drawLine(mGraphLeft + graphWidth * interval / 6.0f, mGraphTop, mGraphLeft + graphWidth * interval / 6.0f, mGraphBottom, mGreyLeftPaint);
-            }
-            // Draw labels.
-            canvas.drawText("<-30s", mGraphLeft, mGraphBottom, mGreyLeftPaint);
-            canvas.drawText("-15s", mGraphLeft + graphWidth / 2, mGraphBottom, mGreyMidPaint);
-            canvas.drawText("Now>", mGraphRight, mGraphBottom, mGreyRightPaint);
-            // Calculate the x- and y-coordinate of the first graph position.
-            float x0 = mGraphLeft;
-            float y0 = mGraphTop + (mTopHeight - mHistory[0]) / scale / 4 * graphHeight;
-            // For each of the next coordinates,
-            for (int index = 1; index < mHistorySize; index++) {
-                // Calculate the x- and y-coordinate of the graph position.
-                float x1 = mGraphLeft + graphWidth * ((float)index / (mHistorySize - 1));
-                float y1 = mGraphTop + (mTopHeight - mHistory[index]) / scale / 4 * graphHeight;
-                // Draw a line between the two coordinates.
-                canvas.drawLine(x0, y0, x1, y1, mGraphPaint);
-                // Retain memory of the last coordinate.
-                x0 = x1;
-                y0 = y1;
-            }
-        }
     }
 
     /**
      * Convert hPa to inches of mercury (1013.25hPa = 29.92126inHg)
-     * @param hPa
-     * @return
+     * @param hPa The pressure in hectopascals.
+     * @return The pressure in inches of mercury.
      */
     static float hPa_to_inHg(float hPa) {
         return hPa / 1013.25f * 29.92126f;
@@ -503,5 +330,9 @@ public class Altimeter extends View {
         }
 
         return indicatedAlt;
+    }
+
+    public boolean isDisplayInFeet() {
+        return mDisplayInFeet;
     }
 }

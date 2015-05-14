@@ -1,11 +1,5 @@
 package uk.co.phabvionics.pilotaltimeter;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -16,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,13 +19,20 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements SensorEventListener {
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class MainActivity extends ActionBarActivity implements SensorEventListener {
     private SensorManager mSensorManager;
     private Sensor mPressure;
-    private Altimeter mAltimeter;
+    private AltimeterView mAltimeterView;
+    private static final Altimeter mAltimeter = Altimeter.getInstance();
     private TextView mText;
-    private VerticalSpeedIndicator mVSI;
-    private android.content.SharedPreferences mSettings;
+    private static final VerticalSpeedIndicator mVSI = VerticalSpeedIndicator.getInstance();
+    private VSIView mVSIView;
+    private static android.content.SharedPreferences mSettings;
     private android.content.SharedPreferences.Editor mEditor;
     private boolean mMetric;
 
@@ -86,8 +88,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         // instance of a particular sensor.
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mPressure = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-        mAltimeter = (Altimeter) findViewById(R.id.altimeter1);
-        mVSI = (VerticalSpeedIndicator) findViewById(R.id.verticalSpeedIndicator1);
+        mAltimeterView = (AltimeterView) findViewById(R.id.altimeter1);
+        mVSIView = (VSIView) findViewById(R.id.verticalSpeedIndicator1);
         mText = (TextView) findViewById(R.id.textView1);
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(this);
@@ -99,7 +101,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         mPressureSelection = mSettings.getInt(PRESSURE_SELECTION, SEL_QNH);
 
         if (!mSettings.getBoolean("show_vsi", true)) {
-            mVSI.setVisibility(View.GONE);
+            mVSIView.setVisibility(View.GONE);
         }
 
         mButtonPlus10 = (Button) findViewById(R.id.buttonPlus10);
@@ -231,6 +233,8 @@ public class MainActivity extends Activity implements SensorEventListener {
                 mAltimeter.SetDatumText("QNH");
                 break;
         }
+
+        setPreferences();
     }
 
     @Override
@@ -292,10 +296,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state);
     }
 
     public File getFileStorageDir(String filename) {
@@ -315,31 +316,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     @Override
     public final void onSensorChanged(SensorEvent event) {
-        if (mSettings.getBoolean(METRIC, true) != mMetric) {
-            mMetric = !mMetric;
-            mAltimeter.setMetric(mMetric);
-        }
-        switch (Integer.parseInt(mSettings.getString("sample_filter_strength",
-                "3"))) {
-            case 0:
-                mAltimeter.SetFilterSettlingTime(0);
-                break;
-            case 1:
-                mAltimeter.SetFilterSettlingTime(0.5f);
-                break;
-            case 2:
-                mAltimeter.SetFilterSettlingTime(1.0f);
-                break;
-            case 3:
-                mAltimeter.SetFilterSettlingTime(2.5f);
-                break;
-            case 4:
-                mAltimeter.SetFilterSettlingTime(5.0f);
-                break;
-            case 5:
-                mAltimeter.SetFilterSettlingTime(10.0f);
-                break;
-        }
         float millibars_of_pressure = event.values[0];
         float deltaTime = event.timestamp - mLastTimestamp;
         deltaTime /= 1000000.0f;
@@ -349,10 +325,6 @@ public class MainActivity extends Activity implements SensorEventListener {
             mText.setText(getString(R.string.not_approved_for_aircraft_navigation_use));
         }
         mLastTimestamp = event.timestamp;
-        mAltimeter.SetDisplayInFeet(mSettings.getBoolean("display_feet", true));
-        mAltimeter.SetDisplayGraph(mSettings.getBoolean("display_alt_history", true));
-        mVSI.setDisplayInFeet(mSettings.getBoolean("display_feet", true));
-        mVSI.setDisplayGraph(mSettings.getBoolean("display_vsi_history", true));
         mAltimeter.setPressure(millibars_of_pressure, event.timestamp);
         if (mVSI != null) {
             mVSI.setPressure(millibars_of_pressure, event.timestamp);
@@ -384,16 +356,54 @@ public class MainActivity extends Activity implements SensorEventListener {
                 }
             }
         }
-        if (mAltimeter != null) {
-            mAltimeter.invalidate();
+        if (mAltimeterView != null) {
+            mAltimeterView.invalidate();
         }
         if (mVSI != null) {
             if (!mSettings.getBoolean("show_vsi", true)) {
-                mVSI.setVisibility(View.GONE);
+                mVSIView.setVisibility(View.GONE);
             } else {
-                mVSI.setVisibility(View.VISIBLE);
+                mVSIView.setVisibility(View.VISIBLE);
             }
-            mVSI.invalidate();
+            mVSIView.invalidate();
         }
+    }
+
+    public static void setPreferences()
+    {
+        // Set up pressure filtering.
+        switch (Integer.parseInt(mSettings.getString("sample_filter_strength", "3"))) {
+            case 0:
+                mAltimeter.SetFilterSettlingTime(0);
+                break;
+            case 1:
+                mAltimeter.SetFilterSettlingTime(0.5f);
+                break;
+            case 2:
+                mAltimeter.SetFilterSettlingTime(1.0f);
+                break;
+            case 3:
+                mAltimeter.SetFilterSettlingTime(2.5f);
+                break;
+            case 4:
+                mAltimeter.SetFilterSettlingTime(5.0f);
+                break;
+            case 5:
+                mAltimeter.SetFilterSettlingTime(10.0f);
+                break;
+        }
+
+        // Set metric altimeter (uses hectoPascals rather than inHg)
+        mAltimeter.setMetric(mSettings.getBoolean(METRIC, true));
+
+        // Set display in feet (or metres if off)
+        mAltimeter.SetDisplayInFeet(mSettings.getBoolean("display_feet", true));
+
+        // Set altimeter history graph display
+        mAltimeter.SetDisplayGraph(mSettings.getBoolean("display_alt_history", true));
+
+
+        mVSI.setDisplayInFeet(mSettings.getBoolean("display_feet", true));
+        mVSI.setDisplayGraph(mSettings.getBoolean("display_vsi_history", true));
     }
 }
