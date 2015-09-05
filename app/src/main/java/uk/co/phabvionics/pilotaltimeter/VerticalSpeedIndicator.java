@@ -19,7 +19,7 @@ public class VerticalSpeedIndicator
     private IIRLowPassFilter mOutputFilter;
     private float mVerticalSpeed;
     private boolean mDisplayInFeet;
-    private boolean mDisplayGraph;
+    private int mDisplayGraphSeconds;
     private float[] mHistory;
     private int mHistorySize;
     private long mHistoryEndTime;
@@ -34,9 +34,7 @@ public class VerticalSpeedIndicator
         //mFilter = new IIRLowPassFilter(0.01f); // time constant = 0 samples
         //mFilter = new IIRLowPassFilter(0.951229424501f); // time constant = 20 samples
         mOutputFilter = new IIRLowPassFilter(200); // time constant = 200 samples
-        mDisplayGraph = true;
-        mHistorySize = 61;
-        mHistory = new float[mHistorySize];
+        setDisplayGraphSeconds(30);
     }
 
     public static VerticalSpeedIndicator getInstance() {
@@ -44,15 +42,13 @@ public class VerticalSpeedIndicator
     }
 
     public void setDisplayInFeet(boolean displayOption) {
-        if (mDisplayInFeet != displayOption) {
-            mDisplayInFeet = displayOption;
-        }
+        mDisplayInFeet = displayOption;
     }
 
-    public void setDisplayGraph(boolean displayOption) {
-        if (mDisplayGraph != displayOption) {
-            mDisplayGraph = displayOption;
-        }
+    public void setDisplayGraphSeconds(int displaySeconds) {
+        mDisplayGraphSeconds = displaySeconds;
+        mHistorySize = displaySeconds * 2 + 1;
+        mHistory = new float[mHistorySize];
     }
 
     public boolean isIndicationValid() {
@@ -115,6 +111,11 @@ public class VerticalSpeedIndicator
         return mHistorySize;
     }
 
+    /**
+     * Get historic values of vertical speed over the past five minutes.
+     * @return A 601-element array that contains vertical speed history ranging from
+     * t=minus 5 minutes to t=0 (i.e. now).
+     */
     public float[] getHistory() {
         return mHistory;
     }
@@ -150,8 +151,8 @@ public class VerticalSpeedIndicator
 //		return vs;
     }
 
-    public boolean isDisplayGraph() {
-        return mDisplayGraph;
+    public int getDisplayGraphSeconds() {
+        return mDisplayGraphSeconds;
     }
 
     public boolean isDisplayInFeet() {

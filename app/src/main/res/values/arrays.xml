@@ -32,4 +32,18 @@
         <item name="2">2</item>
         <item name="3">3</item>
     </string-array>
+    <string-array name="altitudeHistoryValues">
+        <item name="None">0 (Turn off display)</item>
+        <item name="30">30 seconds (0.5 minutes)</item>
+        <item name="60">60 seconds (1 minute)</item>
+        <item name="120">120 seconds (2 minutes)</item>
+        <item name="300">300 seconds (5 minutes)</item>
+    </string-array>
+    <string-array name="altitudeHistoryEntries">
+        <item name="None">0 (Turn off display)</item>
+        <item name="30">30 seconds (0.5 minutes)</item>
+        <item name="60">60 seconds (1 minute)</item>
+        <item name="120">120 seconds (2 minutes)</item>
+        <item name="300">300 seconds (5 minutes)</item>
+    </string-array>
 </resources>

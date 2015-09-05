@@ -51,7 +51,7 @@ public class AltimeterView extends View {
     private float mGraphLeft;
     private float mGraphRight;
     private static final long HISTORY_TIME_STEP = 500000000; // 500ms
-    private boolean mDisplayGraph;
+    private int mDisplayGraphSeconds;
 
     public AltimeterView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -102,7 +102,7 @@ public class AltimeterView extends View {
         final float minGraphPixels = Math.max(mWidth, mHeight) / 4.0f;
         final float graphGuardPixels = 5.0f;
         // If mDisplayGraph is set,
-        if (mAltimeter.isDisplayGraph()) {
+        if (mAltimeter.getDisplayGraphSeconds() > 0) {
             // If component wider than high or square,
             if (mWidth >= mHeight) {
                 // altimeter to display to the right and graph to the left.
@@ -180,9 +180,9 @@ public class AltimeterView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mAltimeter.isDisplayGraph() != mDisplayGraph)
+        if (mAltimeter.getDisplayGraphSeconds() != mDisplayGraphSeconds)
         {
-            mDisplayGraph = mAltimeter.isDisplayGraph();
+            mDisplayGraphSeconds = mAltimeter.getDisplayGraphSeconds();
             setCoordinates();
         }
         // Draw a circle.
@@ -233,7 +233,7 @@ public class AltimeterView extends View {
         canvas.drawText(mAltimeter.getDatumText(), mxDatumTextPos, myDatumTextPos, mDatumPaint);
 
         // If the graph is to be displayed,
-        if (mAltimeter.isDisplayGraph()) {
+        if (mAltimeter.getDisplayGraphSeconds() > 0) {
             // Determine the units in use.
             String units = mAltimeter.isDisplayInFeet() ? "ft" : "m";
             // Determine the scale.
@@ -262,8 +262,9 @@ public class AltimeterView extends View {
                 canvas.drawLine(mGraphLeft + graphWidth * interval / 6.0f, mGraphTop, mGraphLeft + graphWidth * interval / 6.0f, mGraphBottom, mGreyLeftPaint);
             }
             // Draw labels.
-            canvas.drawText("<-30s", mGraphLeft, mGraphBottom, mGreyLeftPaint);
-            canvas.drawText("-15s", mGraphLeft + graphWidth / 2, mGraphBottom, mGreyMidPaint);
+            int interval = mAltimeter.getDisplayGraphSeconds();
+            canvas.drawText("<-" + interval + "s", mGraphLeft, mGraphBottom, mGreyLeftPaint);
+            canvas.drawText("-" + (interval / 2) + "s", mGraphLeft + graphWidth / 2, mGraphBottom, mGreyMidPaint);
             canvas.drawText("Now>", mGraphRight, mGraphBottom, mGreyRightPaint);
             // Calculate the x- and y-coordinate of the first graph position.
             float x0 = mGraphLeft;

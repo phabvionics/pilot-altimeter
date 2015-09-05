@@ -35,7 +35,7 @@ public class VSIView extends View {
     private float mGraphBottom;
     private float mGraphLeft;
     private float mGraphRight;
-    private boolean mDisplayGraph;
+    private int mDisplayGraphSeconds;
 
     public VSIView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -85,7 +85,7 @@ public class VSIView extends View {
         final float minGraphPixels = Math.max(mWidth, mHeight) / 4.0f;
         final float graphGuardPixels = 5.0f;
         // If mDisplayGraph is set,
-        if (mVSI.isDisplayGraph()) {
+        if (mVSI.getDisplayGraphSeconds() > 0) {
             // If component wider than high or square,
             if (mWidth >= mHeight) {
                 // VSI to display to the right and graph to the left.
@@ -178,9 +178,9 @@ public class VSIView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mVSI.isDisplayGraph() != mDisplayGraph)
+        if (mVSI.getDisplayGraphSeconds() != mDisplayGraphSeconds)
         {
-            mDisplayGraph = mVSI.isDisplayGraph();
+            mDisplayGraphSeconds = mVSI.getDisplayGraphSeconds();
             setCoordinates();
         }
         // Draw a circle.
@@ -218,7 +218,7 @@ public class VSIView extends View {
             canvas.drawText("No Data", mxAltPos, myAltPos, mAltitudePaint);
         }
         // If the graph is to be displayed,
-        if (mVSI.isDisplayGraph()) {
+        if (mVSI.getDisplayGraphSeconds() > 0) {
             // Determine the units in use.
             String units = displayInFeet ? "ft/min" : "m/min";
             // Determine the scale.
@@ -266,8 +266,9 @@ public class VSIView extends View {
                 canvas.drawLine(mGraphLeft + graphWidth * interval / 6.0f, mGraphTop, mGraphLeft + graphWidth * interval / 6.0f, mGraphBottom, mGreyLeftPaint);
             }
             // Draw labels.
-            canvas.drawText("<-30s", mGraphLeft, mGraphBottom, mGreyLeftPaint);
-            canvas.drawText("-15s", mGraphLeft + graphWidth / 2, mGraphBottom, mGreyMidPaint);
+            int interval = mVSI.getDisplayGraphSeconds();
+            canvas.drawText("<-" + interval + "s", mGraphLeft, mGraphBottom, mGreyLeftPaint);
+            canvas.drawText("-" + (interval / 2) + "s", mGraphLeft + graphWidth / 2, mGraphBottom, mGreyMidPaint);
             canvas.drawText("Now>", mGraphRight, mGraphBottom, mGreyRightPaint);
             // Calculate the x- and y-coordinate of the first graph position.
             float x0 = mGraphLeft;

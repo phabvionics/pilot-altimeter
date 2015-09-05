@@ -2,6 +2,9 @@ package uk.co.phabvionics.pilotaltimeter;
 
 import android.graphics.Paint;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +63,7 @@ public class Altimeter
     private FilterStrength mFilterStrength;
     private String mDatumText;
     private boolean mDisplayInFeet;
-    private boolean mDisplayGraph;
+    private int mDisplayGraphSeconds;
     private int mWidth;
     private int mHeight;
     private float mGraphTop;
@@ -88,6 +91,11 @@ public class Altimeter
         return mDatumText;
     }
 
+    /**
+     * Get historic values of altitude over the past five minutes.
+     * @return A 601-element array that contains altitude history ranging from t=minus 5 minutes to
+     * t=0 (i.e. now).
+     */
     public float[] getHistory() {
         return mHistory;
     }
@@ -102,8 +110,8 @@ public class Altimeter
         return mStopped;
     }
 
-    public boolean isDisplayGraph() {
-        return mDisplayGraph;
+    public int getDisplayGraphSeconds() {
+        return mDisplayGraphSeconds;
     }
 
     public enum FilterStrength {
@@ -119,7 +127,7 @@ public class Altimeter
         mMetricMode = true;
         mPressureDatum = 1013.25f;
         SetFilterStrength(FilterStrength.FILTER_MEDIUM);
-        mHistorySize = 61;
+        mHistorySize = 601;
         mHistory = new float[mHistorySize];
     }
 
@@ -127,8 +135,10 @@ public class Altimeter
         mDisplayInFeet = displayOption;
     }
 
-    public void SetDisplayGraph(boolean displayOption) {
-        mDisplayGraph = displayOption;
+    public void SetDisplayGraphSeconds(int displaySeconds) {
+        mDisplayGraphSeconds = displaySeconds;
+        mHistorySize = displaySeconds * 2 + 1;
+        mHistory = new float[mHistorySize];
     }
 
     public void SetDatumText(String datumText) {

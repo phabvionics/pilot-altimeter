@@ -44,17 +44,19 @@
         android:summaryOff="Altimeter and VSI display in metres"
         android:defaultValue="true"/>
 
-    <CheckBoxPreference
+    <ListPreference
         android:title="Display altitude history"
-        android:key="display_alt_history"
-        android:summaryOn="30s of altitude history are displayed on a rolling graph"
-        android:summaryOff="The altitude history graph is not displayed"
-        android:defaultValue="true"/>
+        android:key="display_alt_history_seconds"
+        android:defaultValue="30"
+        android:entryValues="@array/altitudeHistoryValues"
+        android:entries="@array/altitudeHistoryEntries"
+        android:summary="Select whether to display the altitude history graph and how much history is retained" />
 
-    <CheckBoxPreference
+    <ListPreference
         android:title="Display vertical speed history"
-        android:key="display_vsi_history"
-        android:summaryOn="30s of vertical speed history are displayed on a rolling graph"
-        android:summaryOff="The vertical history graph is not displayed"
-        android:defaultValue="true"/>
+        android:key="display_vsi_history_seconds"
+        android:defaultValue="30"
+        android:entryValues="@array/altitudeHistoryValues"
+        android:entries="@array/altitudeHistoryEntries"
+        android:summary="Select whether to display the vertical speed history graph and how much history is retained" />
 </PreferenceScreen>

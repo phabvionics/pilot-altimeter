@@ -49,6 +49,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     static final String PRESSURE_DATUM = "PressureDatum";
     static final String PRESSURE_SELECTION = "PressureSelection";
+    static final String ALT_SECONDS = "AltitudeSeconds";
+    static final String VSI_SECONDS = "VSISeconds";
     static final String PRESSURE_QNH = "PressureQNH";
     static final String PRESSURE_QFE = "PressureQFE";
     static final String METRIC = "Metric";
@@ -63,6 +65,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private Button mButtonPressureAlt;
     private Button mButtonQFE;
     private Button mButtonQNH;
+    private int mVSISeconds;
+    private int mAltitudeSeconds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +103,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         mAltimeter.setPressureDatum(mSettings
                 .getFloat(PRESSURE_DATUM, 1013.25f));
         mPressureSelection = mSettings.getInt(PRESSURE_SELECTION, SEL_QNH);
+        mVSISeconds = mSettings.getInt(VSI_SECONDS, 30);
+        mAltitudeSeconds = mSettings.getInt(ALT_SECONDS, 30);
 
         if (!mSettings.getBoolean("show_vsi", true)) {
             mVSIView.setVisibility(View.GONE);
@@ -360,7 +366,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             mAltimeterView.invalidate();
         }
         if (mVSI != null) {
-            if (!mSettings.getBoolean("show_vsi", true)) {
+            if (mSettings.getInt(VSI_SECONDS, 30) == 0) {
                 mVSIView.setVisibility(View.GONE);
             } else {
                 mVSIView.setVisibility(View.VISIBLE);
@@ -400,10 +406,32 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         mAltimeter.SetDisplayInFeet(mSettings.getBoolean("display_feet", true));
 
         // Set altimeter history graph display
-        mAltimeter.SetDisplayGraph(mSettings.getBoolean("display_alt_history", true));
-
+        try {
+            mAltimeter.SetDisplayGraphSeconds(Integer.valueOf(
+                    trimStringAfterSpace(mSettings.getString("display_alt_history_seconds", "30"))));
+        } catch (NumberFormatException e) {
+            mAltimeter.SetDisplayGraphSeconds(30);
+        }
 
         mVSI.setDisplayInFeet(mSettings.getBoolean("display_feet", true));
-        mVSI.setDisplayGraph(mSettings.getBoolean("display_vsi_history", true));
+
+        // Set VSI history graph display
+        try {
+            mVSI.setDisplayGraphSeconds(Integer.valueOf(
+                    trimStringAfterSpace(mSettings.getString("display_vsi_history_seconds", "30"))));
+        } catch (NumberFormatException e) {
+            mVSI.setDisplayGraphSeconds(30);
+        }
+
+    }
+
+    private static String trimStringAfterSpace(String s)
+    {
+        int posOfSpace = s.indexOf(' ');
+        if (posOfSpace > -1)
+        {
+            s = s.substring(0, posOfSpace);
+        }
+        return s;
     }
 }
